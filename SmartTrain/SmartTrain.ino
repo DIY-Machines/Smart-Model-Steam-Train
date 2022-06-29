@@ -130,7 +130,7 @@ const char* password = "DIY-Machines";
 #define MOTOR_1_PIN_1    14
 #define MOTOR_1_PIN_2    15
 #define LIGHT_1    13
-#define UNUSED_1    12
+#define LIGHT_2    12
 
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
@@ -298,12 +298,14 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   }
   else if(!strcmp(variable, "light-on")) {
     Serial.println("Light On");
-    digitalWrite(LIGHT_1, 1);
+    analogWrite(LIGHT_1, 0);
+    analogWrite(LIGHT_1, 125);
 // turn light off
   }
   else if(!strcmp(variable, "light-off")) {
     Serial.println("Light Off");
-    digitalWrite(LIGHT_1, 0);
+    analogWrite(LIGHT_1, 0);
+    analogWrite(LIGHT_1, 0);
 // turn light on
   }
   else if(!strcmp(variable, "backward")) {
@@ -367,7 +369,7 @@ void setup() {
   pinMode(MOTOR_1_PIN_1, OUTPUT);
   pinMode(MOTOR_1_PIN_2, OUTPUT);
   pinMode(LIGHT_1, OUTPUT);
-  pinMode(UNUSED_1, OUTPUT);
+  pinMode(LIGHT_2, OUTPUT);
   
   Serial.begin(115200);
   Serial.setDebugOutput(false);
