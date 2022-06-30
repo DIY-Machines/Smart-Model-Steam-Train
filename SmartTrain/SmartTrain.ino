@@ -145,10 +145,12 @@ httpd_handle_t stream_httpd = NULL;
 static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 <html>
   <head>
-    <title>Smart Train - DIY Machines</title>
+    <title>Live View - DIY Machines</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
+      background {rgb(2,0,36);}
+      background {linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(33,121,9,1) 9%, rgba(0,212,255,1) 69%);}
       table { margin-left: auto; margin-right: auto; }
       td { padding: 8 px; }
       .button {
@@ -178,14 +180,16 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   </head>
   <body>
     <h1>Live View Train</h1>
-    <h2>DIY Machines</h2>
+    <h2>DIYMachines.co.uk</h2>
     <img src="" id="photo" >
     <table>
       <tr>
-        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
-        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td>
       </tr>
+      </table>
+      <table>
       <tr>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('faster');" ontouchstart="toggleCheckbox('faster');">Faster</button></td>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('slower');" ontouchstart="toggleCheckbox('slower');">Slower</button></td>
@@ -306,6 +310,7 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
+    trainDirection = 1;
     analogWrite(MOTOR_1_PIN_DIR, 0);
     analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
@@ -323,13 +328,15 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   }
   else if(!strcmp(variable, "backward")) {
     Serial.println("Backward");
+    trainDirection = 0;
     analogWrite(MOTOR_1_PIN_DIR, 255);
-    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+    analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
   }
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
-    analogWrite(MOTOR_1_PIN_DIR, 0);
-    analogWrite(MOTOR_1_PIN_SPEED, 0);
+    trainSpeed = 0;
+    trainDirection = 1;
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
     else if(!strcmp(variable, "faster")) {
     Serial.println("Increasing speed if we can...");
@@ -340,7 +347,11 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     } else {
       trainSpeed = trainSpeed + 10;
     }
-    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+    if (trainDirection == 1){
+      analogWrite(MOTOR_1_PIN_SPEED, trainSpeed); 
+    } else if (trainDirection == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    }
   }
     else if(!strcmp(variable, "slower")) {
     Serial.println("Decreasing speed if we can...");
@@ -351,7 +362,11 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     } else {
       trainSpeed = trainSpeed - 10;
     }
-    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+    if (trainDirection == 1){
+      analogWrite(MOTOR_1_PIN_SPEED, trainSpeed); 
+    } else if (trainDirection == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    }
   }
   else {
     res = -1;
