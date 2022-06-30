@@ -127,8 +127,8 @@ const char* password = "DIY-Machines";
   #error "Camera model not selected"
 #endif
 
-#define MOTOR_1_PIN_1    14
-#define MOTOR_1_PIN_2    15
+#define MOTOR_1_PIN_DIR    14
+#define MOTOR_1_PIN_SPEED    15
 #define LIGHT_1    13
 #define LIGHT_2    12
 
@@ -174,13 +174,22 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     </style>
   </head>
   <body>
-    <h1>Brainy Trainy</h1>
+    <h1>Live View Train</h1>
     <h2>DIY Machines</h2>
     <img src="" id="photo" >
     <table>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td></tr>
-      <tr><td align="center"><button class="button" onmousedown="toggleCheckbox('light-on');" ontouchstart="toggleCheckbox('light-on');" onmouseup="toggleCheckbox('light-on');" ontouchend="toggleCheckbox('light-on');">Light On</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td><td align="center"><button class="button" onmousedown="toggleCheckbox('light-off');" ontouchstart="toggleCheckbox('light-off');" onmouseup="toggleCheckbox('light-off');" ontouchend="toggleCheckbox('light-off');">Light Off</button></td></tr>
-      <tr><td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td></tr>                   
+      <tr>
+        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
+        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
+      </tr>
+      <tr>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
+      </tr>
+      <tr>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('light-on');" ontouchstart="toggleCheckbox('light-on');" onmouseup="toggleCheckbox('light-on');" ontouchend="toggleCheckbox('light-on');">Light On</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('light-off');" ontouchstart="toggleCheckbox('light-off');" onmouseup="toggleCheckbox('light-off');" ontouchend="toggleCheckbox('light-off');">Light Off</button></td>
+      </tr>                   
     </table>
    <script>
    function toggleCheckbox(x) {
@@ -293,8 +302,8 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
-    analogWrite(MOTOR_1_PIN_1, 0);
-    analogWrite(MOTOR_1_PIN_2, 125);
+    analogWrite(MOTOR_1_PIN_DIR, 0);
+    analogWrite(MOTOR_1_PIN_SPEED, 160);
   }
   else if(!strcmp(variable, "light-on")) {
     Serial.println("Light On");
@@ -310,13 +319,13 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   }
   else if(!strcmp(variable, "backward")) {
     Serial.println("Backward");
-    analogWrite(MOTOR_1_PIN_1, 0);
-    analogWrite(MOTOR_1_PIN_2, 255);
+    analogWrite(MOTOR_1_PIN_DIR, 255);
+    analogWrite(MOTOR_1_PIN_SPEED, 160);
   }
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
-    analogWrite(MOTOR_1_PIN_1, 0);
-    analogWrite(MOTOR_1_PIN_2, 0);
+    analogWrite(MOTOR_1_PIN_DIR, 0);
+    analogWrite(MOTOR_1_PIN_SPEED, 0);
   }
   else {
     res = -1;
@@ -366,8 +375,8 @@ void startCameraServer(){
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   
-  pinMode(MOTOR_1_PIN_1, OUTPUT);
-  pinMode(MOTOR_1_PIN_2, OUTPUT);
+  pinMode(MOTOR_1_PIN_DIR, OUTPUT);
+  pinMode(MOTOR_1_PIN_SPEED, OUTPUT);
   pinMode(LIGHT_1, OUTPUT);
   pinMode(LIGHT_2, OUTPUT);
   
