@@ -132,6 +132,9 @@ const char* password = "DIY-Machines";
 #define LIGHT_1    13
 #define LIGHT_2    12
 
+int trainDirection = 1; //1 = forwards, 2= backward
+int trainSpeed = 0; //0 = stop, 255 = full steam ahead or backward
+
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
 static const char* _STREAM_PART = "Content-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n";
@@ -184,7 +187,8 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
         <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
       </tr>
       <tr>
-        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('faster');" ontouchstart="toggleCheckbox('faster');">Faster</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('slower');" ontouchstart="toggleCheckbox('slower');">Slower</button></td>
       </tr>
       <tr>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('light-on');" ontouchstart="toggleCheckbox('light-on');" onmouseup="toggleCheckbox('light-on');" ontouchend="toggleCheckbox('light-on');">Light On</button></td>
@@ -303,7 +307,7 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
     analogWrite(MOTOR_1_PIN_DIR, 0);
-    analogWrite(MOTOR_1_PIN_SPEED, 160);
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
   else if(!strcmp(variable, "light-on")) {
     Serial.println("Light On");
@@ -320,12 +324,34 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   else if(!strcmp(variable, "backward")) {
     Serial.println("Backward");
     analogWrite(MOTOR_1_PIN_DIR, 255);
-    analogWrite(MOTOR_1_PIN_SPEED, 160);
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
     analogWrite(MOTOR_1_PIN_DIR, 0);
     analogWrite(MOTOR_1_PIN_SPEED, 0);
+  }
+    else if(!strcmp(variable, "faster")) {
+    Serial.println("Increasing speed if we can...");
+    if (trainSpeed == 0){
+      trainSpeed = trainSpeed + 50;
+    } else if (trainSpeed ==250){
+      //do nothing
+    } else {
+      trainSpeed = trainSpeed + 10;
+    }
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+  }
+    else if(!strcmp(variable, "slower")) {
+    Serial.println("Decreasing speed if we can...");
+    if (trainSpeed == 0){
+      // do nothing
+    } else if (trainSpeed ==250){
+      trainSpeed = trainSpeed - 50;
+    } else {
+      trainSpeed = trainSpeed - 10;
+    }
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
   else {
     res = -1;
