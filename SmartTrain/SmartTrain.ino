@@ -129,8 +129,12 @@ const char* password = "DIY-Machines";
 
 #define MOTOR_1_PIN_DIR    14
 #define MOTOR_1_PIN_SPEED    15
-#define LIGHT_1    13
-#define LIGHT_2    12
+#define STEAM_1    13
+#define STEAM_2    12
+#define LIGHT    2
+
+int trainDirection = 1; //1 = forwards, 2= backward
+int trainSpeed = 0; //0 = stop, 255 = full steam ahead or backward
 
 static const char* _STREAM_CONTENT_TYPE = "multipart/x-mixed-replace;boundary=" PART_BOUNDARY;
 static const char* _STREAM_BOUNDARY = "\r\n--" PART_BOUNDARY "\r\n";
@@ -142,10 +146,12 @@ httpd_handle_t stream_httpd = NULL;
 static const char PROGMEM INDEX_HTML[] = R"rawliteral(
 <html>
   <head>
-    <title>Smart Train - DIY Machines</title>
+    <title>Live View - DIY Machines</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       body { font-family: Arial; text-align: center; margin:0px auto; padding-top: 30px;}
+      background {rgb(2,0,36);}
+      background {linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(33,121,9,1) 9%, rgba(0,212,255,1) 69%);}
       table { margin-left: auto; margin-right: auto; }
       td { padding: 8 px; }
       .button {
@@ -175,21 +181,28 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
   </head>
   <body>
     <h1>Live View Train</h1>
-    <h2>DIY Machines</h2>
+    <h2>DIYMachines.co.uk</h2>
     <img src="" id="photo" >
     <table>
       <tr>
-        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
-        <td colspan="3" align="center"><button class="button" onmousedown="toggleCheckbox('backward');" ontouchstart="toggleCheckbox('backward');" onmouseup="toggleCheckbox('backward');" ontouchend="toggleCheckbox('backward');">Backwards</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('forward');" ontouchstart="toggleCheckbox('forward');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Forwards</button></td>
       </tr>
+      </table>
+      <table>
       <tr>
-        <td align="center"><button class="button" onmousedown="toggleCheckbox('stop');" ontouchstart="toggleCheckbox('stop');">Stop</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('faster');" ontouchstart="toggleCheckbox('faster');">Faster</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('slower');" ontouchstart="toggleCheckbox('slower');">Slower</button></td>
       </tr>
       <tr>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('light-on');" ontouchstart="toggleCheckbox('light-on');" onmouseup="toggleCheckbox('light-on');" ontouchend="toggleCheckbox('light-on');">Light On</button></td>
         <td align="center"><button class="button" onmousedown="toggleCheckbox('light-off');" ontouchstart="toggleCheckbox('light-off');" onmouseup="toggleCheckbox('light-off');" ontouchend="toggleCheckbox('light-off');">Light Off</button></td>
-      </tr>                   
+      </tr>
+      <tr>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('steam-on');" ontouchstart="toggleCheckbox('steam-on');" onmouseup="toggleCheckbox('steam-on');" ontouchend="toggleCheckbox('steam-on');">Steam On</button></td>
+        <td align="center"><button class="button" onmousedown="toggleCheckbox('steam-off');" ontouchstart="toggleCheckbox('steam-off');" onmouseup="toggleCheckbox('steam-off');" ontouchend="toggleCheckbox('steam-off');">Steam Off</button></td>
+      </tr>                 
     </table>
    <script>
    function toggleCheckbox(x) {
@@ -302,30 +315,69 @@ static esp_err_t cmd_handler(httpd_req_t *req){
   
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
+    trainDirection = 1;
     analogWrite(MOTOR_1_PIN_DIR, 0);
-    analogWrite(MOTOR_1_PIN_SPEED, 160);
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
   }
   else if(!strcmp(variable, "light-on")) {
     Serial.println("Light On");
-    analogWrite(LIGHT_1, 0);
-    analogWrite(LIGHT_1, 125);
-// turn light off
+    analogWrite(LIGHT, 255);
   }
   else if(!strcmp(variable, "light-off")) {
     Serial.println("Light Off");
-    analogWrite(LIGHT_1, 0);
-    analogWrite(LIGHT_1, 0);
-// turn light on
+    analogWrite(LIGHT, 0);
+  }
+    else if(!strcmp(variable, "steam-on")) {
+    Serial.println("Steam On");
+    digitalWrite(STEAM_1, HIGH);
+    digitalWrite(STEAM_2,LOW);
+  }
+    else if(!strcmp(variable, "steam-off")) {
+    Serial.println("Steam Off");
+    digitalWrite(STEAM_1, LOW);
+    digitalWrite(STEAM_2, LOW);
   }
   else if(!strcmp(variable, "backward")) {
     Serial.println("Backward");
+    trainDirection = 0;
     analogWrite(MOTOR_1_PIN_DIR, 255);
-    analogWrite(MOTOR_1_PIN_SPEED, 160);
+    analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
   }
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
-    analogWrite(MOTOR_1_PIN_DIR, 0);
-    analogWrite(MOTOR_1_PIN_SPEED, 0);
+    trainSpeed = 0;
+    trainDirection = 1;
+    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+  }
+    else if(!strcmp(variable, "faster")) {
+    Serial.println("Increasing speed if we can...");
+    if (trainSpeed == 0){
+      trainSpeed = trainSpeed + 50;
+    } else if (trainSpeed ==250){
+      //do nothing
+    } else {
+      trainSpeed = trainSpeed + 10;
+    }
+    if (trainDirection == 1){
+      analogWrite(MOTOR_1_PIN_SPEED, trainSpeed); 
+    } else if (trainDirection == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    }
+  }
+    else if(!strcmp(variable, "slower")) {
+    Serial.println("Decreasing speed if we can...");
+    if (trainSpeed == 0){
+      // do nothing
+    } else if (trainSpeed ==250){
+      trainSpeed = trainSpeed - 50;
+    } else {
+      trainSpeed = trainSpeed - 10;
+    }
+    if (trainDirection == 1){
+      analogWrite(MOTOR_1_PIN_SPEED, trainSpeed); 
+    } else if (trainDirection == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    }
   }
   else {
     res = -1;
@@ -377,8 +429,9 @@ void setup() {
   
   pinMode(MOTOR_1_PIN_DIR, OUTPUT);
   pinMode(MOTOR_1_PIN_SPEED, OUTPUT);
-  pinMode(LIGHT_1, OUTPUT);
-  pinMode(LIGHT_2, OUTPUT);
+  pinMode(STEAM_1, OUTPUT);
+  pinMode(STEAM_2, OUTPUT);
+  pinMode(LIGHT, OUTPUT);
   
   Serial.begin(115200);
   Serial.setDebugOutput(false);
