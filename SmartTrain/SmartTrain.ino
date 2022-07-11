@@ -341,13 +341,20 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     Serial.println("Backward");
     trainDirection = 0;
     analogWrite(MOTOR_1_PIN_DIR, 255);
-    analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    if (trainSpeed == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, 255);
+    } else {
+      analogWrite(MOTOR_1_PIN_SPEED, map(trainSpeed, 0, 250, 250, 0));
+    }
   }
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
     trainSpeed = 0;
-    trainDirection = 1;
-    analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+    if (trainDirection == 1){
+      analogWrite(MOTOR_1_PIN_SPEED, trainSpeed);
+    } else if (trainDirection == 0){
+      analogWrite(MOTOR_1_PIN_SPEED, 255);
+    }
   }
     else if(!strcmp(variable, "faster")) {
     Serial.println("Increasing speed if we can...");
