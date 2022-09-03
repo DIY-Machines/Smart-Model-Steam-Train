@@ -1,6 +1,12 @@
 /*********
-  Rui Santos
-  Complete instructions at https://RandomNerdTutorials.com/esp32-cam-projects-ebook/
+
+3D Printed SMart Steam Train with intergarted live view camera, water based steam
+effect and working lantern all controlled form your mobile phone via WiFi with the ESP32.
+
+Video of project and detailed build instructions available here: https://youtu.be/2DW-F3tMyNs 
+Find out more at https://www.diymachines.co.uk 
+  
+  This code is built upon that created by Rui Santos ( https://RandomNerdTutorials.com/esp32-cam-projects-ebook/ )
   
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files.
   The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
