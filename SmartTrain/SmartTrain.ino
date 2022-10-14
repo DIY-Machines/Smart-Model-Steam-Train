@@ -23,8 +23,10 @@ Find out more at https://www.diymachines.co.uk
 #include "esp_http_server.h"
 
 // Replace with your network credentials
+#define WIFI_CLIENT //undefine or WIFI_AP
 const char* ssid = "Smart_Train";
 const char* password = "DIY-Machines";
+const uint8_t max_wifi_fails = 10;
 
 #define PART_BOUNDARY "123456789000000000000987654321"
 
@@ -437,6 +439,33 @@ void startCameraServer(){
   }
 }
 
+esp_err_t init_wifi(IPAddress &ip)
+{
+  uint8_t failcount=0;
+  WiFi.mode(WIFI_MODE_APSTA);
+  
+  #ifdef WIFI_CLIENT
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500);
+    Serial.print(".");
+    if (failcount++ > max_wifi_fails) {    
+      Serial.println("Couldn't connect to AP, check your credentials");
+      return ESP_ERR_TIMEOUT;
+    }
+  }
+  ip = WiFi.localIP();
+  return ESP_OK;
+  
+  #else //WIFI_AP
+  WiFi.softAP(ssid, password);
+  ip = WiFi.softAPIP();
+  return ESP_OK;
+  
+  #endif
+}
+
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
   
@@ -487,11 +516,16 @@ void setup() {
     Serial.printf("Camera init failed with error 0x%x", err);
     return;
   }
-  // Wi-Fi connection
-WiFi.softAP(ssid, password);
+
+  IPAddress ip_addr;
+  err = init_wifi(ip_addr);
+  if (err != ESP_OK) {
+    Serial.printf("Wifi init failed with error 0x%x", err);
+    return;
+  }
   
   Serial.print("Camera Stream Ready! Go to: http://");
-  Serial.println(WiFi.localIP());
+  Serial.println(ip_addr);
   
   // Start streaming web server
   startCameraServer();
